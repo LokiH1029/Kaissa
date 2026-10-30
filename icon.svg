@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <rect width="128" height="128" rx="16" fill="#2b1d14"/>
+  <g transform="translate(14 14)">
+    <rect width="25" height="25" fill="#b8322a"/><rect x="25" width="25" height="25" fill="#e3b341"/>
+    <rect x="50" width="25" height="25" fill="#b8322a"/><rect x="75" width="25" height="25" fill="#e3b341"/>
+    <rect y="25" width="25" height="25" fill="#e3b341"/><rect x="25" y="25" width="25" height="25" fill="#b8322a"/>
+    <rect x="50" y="25" width="25" height="25" fill="#e3b341"/><rect x="75" y="25" width="25" height="25" fill="#b8322a"/>
+    <rect y="50" width="25" height="25" fill="#b8322a"/><rect x="25" y="50" width="25" height="25" fill="#e3b341"/>
+    <rect x="50" y="50" width="25" height="25" fill="#b8322a"/><rect x="75" y="50" width="25" height="25" fill="#e3b341"/>
+    <rect y="75" width="25" height="25" fill="#e3b341"/><rect x="25" y="75" width="25" height="25" fill="#b8322a"/>
+    <rect x="50" y="75" width="25" height="25" fill="#e3b341"/><rect x="75" y="75" width="25" height="25" fill="#b8322a"/>
+  </g>
+  <circle cx="64" cy="64" r="24" fill="#f4ead5" stroke="#2b1d14" stroke-width="5"/>
+  <text x="64" y="74" font-family="serif" font-size="30" font-weight="bold" text-anchor="middle" fill="#2b1d14">U</text>
+</svg>
