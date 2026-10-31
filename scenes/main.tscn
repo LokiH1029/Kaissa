@@ -47,7 +47,7 @@ theme_override_constants/margin_bottom = 20
 [node name="VBox" type="VBoxContainer" parent="UI/Panel/Margin"]
 layout_mode = 2
 mouse_filter = 2
-theme_override_constants/separation = 16
+theme_override_constants/separation = 12
 
 [node name="Title" type="Label" parent="UI/Panel/Margin/VBox"]
 layout_mode = 2
@@ -57,8 +57,38 @@ text = "Kaissa"
 [node name="StatusLabel" type="Label" parent="UI/Panel/Margin/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_font_sizes/font_size = 24
+theme_override_font_sizes/font_size = 22
 text = "Gelb ist am Zug"
+autowrap_mode = 3
+
+[node name="HomestoneLabel" type="Label" parent="UI/Panel/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+autowrap_mode = 3
+
+[node name="HomestoneButton" type="Button" parent="UI/Panel/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Homestone setzen"
+
+[node name="PromotionBox" type="VBoxContainer" parent="UI/Panel/Margin/VBox"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+
+[node name="PromotionLabel" type="Label" parent="UI/Panel/Margin/VBox/PromotionBox"]
+layout_mode = 2
+text = "Spearman einlösen gegen:"
+
+[node name="PromoteRiderButton" type="Button" parent="UI/Panel/Margin/VBox/PromotionBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Rider of the High Tharlarion"
+
+[node name="PromoteTarnsmanButton" type="Button" parent="UI/Panel/Margin/VBox/PromotionBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Tarnsman"
 
 [node name="InfoLabel" type="Label" parent="UI/Panel/Margin/VBox"]
 unique_name_in_owner = true
@@ -79,9 +109,25 @@ mouse_filter = 2
 [node name="Legend" type="Label" parent="UI/Panel/Margin/VBox"]
 layout_mode = 2
 autowrap_mode = 3
-text = "U Ubar · A Ubara · R Reiter des Hohen Tharlarion
-T Tarnkämpfer · E Eingeweihter · S Schreiber
-B Baumeister · kleine Steine: Speerträger"
+text = "UB Ubar · UA Ubara · TM Tarnsman · SC Scribe
+BD Builder · IN Initiate · SM Spearman
+HT Rider of the High Tharlarion · PH Physician
+HS Homestone (Raute)"
+
+[node name="GameButtons" type="HBoxContainer" parent="UI/Panel/Margin/VBox"]
+layout_mode = 2
+
+[node name="ResignButton" type="Button" parent="UI/Panel/Margin/VBox/GameButtons"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Aufgeben"
+
+[node name="DrawButton" type="Button" parent="UI/Panel/Margin/VBox/GameButtons"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Remis vereinbaren"
 
 [node name="RestartButton" type="Button" parent="UI/Panel/Margin/VBox"]
 unique_name_in_owner = true

@@ -1,54 +1,58 @@
 # Spielregeln
 
-Kaissa ist in den Gor-Romanen das beliebteste Brettspiel der Goreaner. Die Bücher erwähnen das
-Brett mit 100 roten und gelben Feldern, die beiden Farben der Parteien und die Namen vieler
-Figuren, beschreiben aber kaum, wie die Figuren ziehen. Die folgenden Regeln sind deshalb eine
-eigene Ausarbeitung für dieses Spiel. Alle Zugmuster stehen zentral in `scripts/piece_types.gd`
-und lassen sich dort ändern.
+Kaissa ist in den Gor-Romanen das beliebteste Brettspiel der Goreaner. Die Regeln hier folgen
+Dans Vorgaben. Alle Zugmuster stehen zentral in `scripts/piece_types.gd` und lassen sich dort
+ändern.
 
 ## Brett und Aufstellung
 
-Gespielt wird auf 10 × 10 Feldern. Gelb steht unten und beginnt, Rot steht oben.
+Gespielt wird auf 10 × 10 roten und gelben Feldern. Die Reihen sind von oben (1) nach unten (10)
+nummeriert, die Linien von links nach rechts a bis j. Gelb steht unten und beginnt, Rot steht oben.
+Beide Seiten stellen gleich auf, sodass Ubar und Ubar einander gegenüberstehen.
 
-| Reihe | a | b | c | d | e | f | g | h | i | j |
+| Gelb | a | b | c | d | e | f | g | h | i | j |
 |---|---|---|---|---|---|---|---|---|---|---|
-| Grundreihe | R | T | E | S | U | A | S | E | T | R |
-| Vorderreihe | B | Sp | Sp | Sp | Sp | Sp | Sp | Sp | Sp | B |
+| Reihe 10 (erste Reihe) | IN | BD | SC | TM | UB | UA | TM | SC | BD | IN |
+| Reihe 9 | PH | HT | SM | SM | SM | SM | SM | SM | HT | PH |
+| Reihe 8 | SM | | | | | | | | | SM |
 
-Beide Ubar stehen sich auf der e-Linie gegenüber.
+Rot steht spiegelbildlich auf den Reihen 1 bis 3. Die Ubara steht damit auf einem Feld ihrer
+eigenen Farbe. Jede Seite hat 22 Figuren, dazu kommt der Homestone.
 
 ## Figuren
 
 | Zeichen | Figur | Zug |
 |---|---|---|
-| U | Ubar | ein Feld in jede Richtung |
-| A | Ubara | beliebig weit gerade oder schräg |
-| R | Reiter des Hohen Tharlarion | beliebig weit gerade |
-| T | Tarnkämpfer | springt 1+2 oder 1+3 Felder (wie ein verlängerter Springer), darf über Figuren fliegen |
-| E | Eingeweihter | beliebig weit schräg |
-| S | Schreiber | bis zu zwei Felder in jede Richtung |
-| B | Baumeister | bis zu zwei Felder gerade |
-| Sp | Speerträger | ein Feld vorwärts, beim ersten Zug auch zwei; schlägt schräg vorwärts |
+| UB | Ubar | beliebig weit in jede Richtung |
+| UA | Ubara | bis zu drei Felder in jede Richtung |
+| TM | Tarnsman | springt drei Felder in eine Richtung und zwei quer dazu, auch über Figuren, und darf dabei schlagen. Alternativ ein Feld in jede Richtung, dann aber ohne zu schlagen |
+| SC | Scribe | bis zu fünf Felder schräg (bleibt so immer auf seiner Farbe) |
+| BD | Builder | beliebig weit vorwärts, rückwärts und seitwärts |
+| IN | Initiate | beliebig weit schräg |
+| SM | Spearman | nur vorwärts, beim ersten Zug ein, zwei oder drei Felder, danach eines; schlägt nur schräg vorwärts |
+| HT | Rider of the High Tharlarion | ein Feld in jede Richtung |
+| PH | Physician | bis zu zwei Felder in jede Richtung |
+| HS | Homestone | ein Feld in jede Richtung, darf nicht schlagen |
 
-Außer dem Tarnkämpfer kann keine Figur über andere hinwegziehen. Geschlagen wird, indem man auf
-das Feld einer gegnerischen Figur zieht.
+Außer dem Tarnsman beim Sprung kann keine Figur über andere hinwegziehen. Geschlagen wird, indem
+man auf das Feld einer gegnerischen Figur zieht.
 
-## Umwandlung
+## Spearman einlösen
 
-Ein Speerträger, der die gegnerische Grundreihe erreicht, wird zum Reiter des Hohen Tharlarion.
+Erreicht ein Spearman die erste Reihe des Gegners, wird er gegen einen Rider of the High
+Tharlarion oder einen Tarnsman eingelöst. Der Spieler wählt.
+
+## Homestone
+
+- Der Homestone steht zu Beginn nicht auf dem Brett.
+- Jede Seite setzt ihn auf ein freies Feld ihrer eigenen ersten Reihe. Das Setzen zählt als Zug.
+- Er muss spätestens im zehnten eigenen Zug gesetzt werden. Ist es im zehnten Zug noch nicht
+  geschehen, kann der Spieler nur noch den Homestone setzen. Ist dann kein Feld der ersten Reihe
+  frei, verliert er.
 
 ## Spielende
 
-- Wer den gegnerischen Ubar schlägt, gewinnt.
-- Wer am Zug ist und keinen erlaubten Zug mehr hat, verliert.
-
-Es gibt bewusst kein Schach im Sinne des irdischen Schachspiels: Ein ungeschützter Ubar kann
-einfach geschlagen werden.
-
-## Offene Punkte
-
-- **Heimstein:** In den Romanen wird ein Heimstein erwähnt, der im Spiel eine Rolle hat. Eine
-  mögliche Erweiterung: Jede Seite setzt ihren Heimstein in den ersten Zügen auf ein Feld der
-  eigenen Hälfte, und wer den gegnerischen Heimstein erobert, gewinnt.
-- Remisregeln (Zugwiederholung, zu wenig Material)
-- Feinabstimmung der Figurenstärken nach Testpartien
+- Wer den gegnerischen Homestone schlägt, gewinnt.
+- Der Verlust des Ubar beendet das Spiel nicht.
+- Ein Spieler kann aufgeben, und beide können sich auf ein Remis einigen.
+- Eigene Ergänzung: Wer am Zug ist und weder ziehen noch den Homestone setzen kann, verliert.
