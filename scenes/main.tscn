@@ -109,8 +109,8 @@ mouse_filter = 2
 [node name="Legend" type="Label" parent="UI/Panel/Margin/VBox"]
 layout_mode = 2
 autowrap_mode = 3
-text = "UB Ubar · UA Ubara · TM Tarnsman · SC Scribe
-BD Builder · IN Initiate · SM Spearman
+text = "UB Ubar · UA Ubara · TN Tarnsman · SC Scribe
+BD Builder · IN Initiate · SP Spearman
 HT Rider of the High Tharlarion · PH Physician
 HS Homestone (Raute)"
 

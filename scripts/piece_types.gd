@@ -29,14 +29,14 @@ const TARN_LEAPS: Array[Vector2i] = [
 const DEFINITIONS := {
 	Type.UBAR:      {"name": "Ubar",                         "short": "UB", "moves": [{"kind": "slide", "dirs": ALL_DIRS, "range": 0}]},
 	Type.UBARA:     {"name": "Ubara",                        "short": "UA", "moves": [{"kind": "slide", "dirs": ALL_DIRS, "range": 3}]},
-	Type.TARNSMAN:  {"name": "Tarnsman",                     "short": "TM", "moves": [
+	Type.TARNSMAN:  {"name": "Tarnsman",                     "short": "TN", "moves": [
 		{"kind": "leap", "offsets": TARN_LEAPS},
 		{"kind": "slide", "dirs": ALL_DIRS, "range": 1, "capture": false},
 	]},
 	Type.SCRIBE:    {"name": "Scribe",                       "short": "SC", "moves": [{"kind": "slide", "dirs": DIAG, "range": 5}]},
 	Type.BUILDER:   {"name": "Builder",                      "short": "BD", "moves": [{"kind": "slide", "dirs": ORTHO, "range": 0}]},
 	Type.INITIATE:  {"name": "Initiate",                     "short": "IN", "moves": [{"kind": "slide", "dirs": DIAG, "range": 0}]},
-	Type.SPEARMAN:  {"name": "Spearman",                     "short": "SM", "moves": [{"kind": "spear"}]},
+	Type.SPEARMAN:  {"name": "Spearman",                     "short": "SP", "moves": [{"kind": "spear"}]},
 	Type.RIDER:     {"name": "Rider of the High Tharlarion", "short": "HT", "moves": [{"kind": "slide", "dirs": ALL_DIRS, "range": 1}]},
 	Type.PHYSICIAN: {"name": "Physician",                    "short": "PH", "moves": [{"kind": "slide", "dirs": ALL_DIRS, "range": 2}]},
 	Type.HOMESTONE: {"name": "Homestone",                    "short": "HS", "moves": [{"kind": "slide", "dirs": ALL_DIRS, "range": 1, "capture": false}]},

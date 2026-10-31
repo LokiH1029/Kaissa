@@ -12,9 +12,9 @@ Beide Seiten stellen gleich auf, sodass Ubar und Ubar einander gegenüberstehen.
 
 | Gelb | a | b | c | d | e | f | g | h | i | j |
 |---|---|---|---|---|---|---|---|---|---|---|
-| Reihe 10 (erste Reihe) | IN | BD | SC | TM | UB | UA | TM | SC | BD | IN |
-| Reihe 9 | PH | HT | SM | SM | SM | SM | SM | SM | HT | PH |
-| Reihe 8 | SM | | | | | | | | | SM |
+| Reihe 10 (erste Reihe) | IN | BD | SC | TN | UB | UA | TN | SC | BD | IN |
+| Reihe 9 | PH | HT | SP | SP | SP | SP | SP | SP | HT | PH |
+| Reihe 8 | SP | | | | | | | | | SP |
 
 Rot steht spiegelbildlich auf den Reihen 1 bis 3. Die Ubara steht damit auf einem Feld ihrer
 eigenen Farbe. Jede Seite hat 22 Figuren, dazu kommt der Homestone.
@@ -25,11 +25,11 @@ eigenen Farbe. Jede Seite hat 22 Figuren, dazu kommt der Homestone.
 |---|---|---|
 | UB | Ubar | beliebig weit in jede Richtung |
 | UA | Ubara | bis zu drei Felder in jede Richtung |
-| TM | Tarnsman | springt drei Felder in eine Richtung und zwei quer dazu, auch über Figuren, und darf dabei schlagen. Alternativ ein Feld in jede Richtung, dann aber ohne zu schlagen |
+| TN | Tarnsman | springt drei Felder in eine Richtung und zwei quer dazu, auch über Figuren, und darf dabei schlagen. Alternativ ein Feld in jede Richtung, dann aber ohne zu schlagen |
 | SC | Scribe | bis zu fünf Felder schräg (bleibt so immer auf seiner Farbe) |
 | BD | Builder | beliebig weit vorwärts, rückwärts und seitwärts |
 | IN | Initiate | beliebig weit schräg |
-| SM | Spearman | nur vorwärts, beim ersten Zug ein, zwei oder drei Felder, danach eines; schlägt nur schräg vorwärts |
+| SP | Spearman | nur vorwärts, beim ersten Zug ein, zwei oder drei Felder, danach eines; schlägt nur schräg vorwärts |
 | HT | Rider of the High Tharlarion | ein Feld in jede Richtung |
 | PH | Physician | bis zu zwei Felder in jede Richtung |
 | HS | Homestone | ein Feld in jede Richtung, darf nicht schlagen |
