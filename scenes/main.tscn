@@ -54,6 +54,28 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 40
 text = "Kaissa"
 
+[node name="PlayersGrid" type="GridContainer" parent="UI/Panel/Margin/VBox"]
+layout_mode = 2
+columns = 2
+
+[node name="YellowLabel" type="Label" parent="UI/Panel/Margin/VBox/PlayersGrid"]
+layout_mode = 2
+text = "Gelb:"
+
+[node name="YellowPlayer" type="OptionButton" parent="UI/Panel/Margin/VBox/PlayersGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="RedLabel" type="Label" parent="UI/Panel/Margin/VBox/PlayersGrid"]
+layout_mode = 2
+text = "Rot:"
+
+[node name="RedPlayer" type="OptionButton" parent="UI/Panel/Margin/VBox/PlayersGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
 [node name="StatusLabel" type="Label" parent="UI/Panel/Margin/VBox"]
 unique_name_in_owner = true
 layout_mode = 2

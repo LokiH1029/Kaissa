@@ -29,6 +29,8 @@ var targets: Array[Vector2i] = []
 var last_move: Array[Vector2i] = []
 ## true, solange der Spieler ein Feld für seinen Homestone wählt.
 var placing_homestone := false
+## false, solange der Bot am Zug ist: Klicks werden dann ignoriert.
+var accepts_moves := true
 var _font: Font
 
 func _ready() -> void:
@@ -59,6 +61,16 @@ func complete_move(from: Vector2i, to: Vector2i, promotion: int = -1) -> void:
 		last_move = [from, to]
 	queue_redraw()
 
+## Führt eine Aktion des Bots aus (siehe [method KaissaAI.choose_action]).
+func apply_action(action: Dictionary) -> void:
+	clear_selection()
+	if action.from == Vector2i(-1, -1):
+		if rules.place_homestone(action.to):
+			last_move = [action.to]
+		queue_redraw()
+	else:
+		complete_move(action.from, action.to, action.promotion)
+
 func cell_at(local_pos: Vector2) -> Vector2i:
 	var cell := Vector2i(floori(local_pos.x / cell_size), floori(local_pos.y / cell_size))
 	return cell if KaissaRules.in_bounds(cell) else Vector2i(-1, -1)
@@ -69,7 +81,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
 		var cell := cell_at(to_local(event.position))
 		hovered_piece.emit(rules.piece_at(cell) if cell.x >= 0 else {})
-	elif event is InputEventMouseButton and event.pressed:
+	elif event is InputEventMouseButton and event.pressed and accepts_moves:
 		if event.button_index == MOUSE_BUTTON_RIGHT:
 			clear_selection()
 		elif event.button_index == MOUSE_BUTTON_LEFT:
