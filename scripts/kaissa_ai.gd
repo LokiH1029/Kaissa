@@ -396,6 +396,143 @@ func _master_search(max_depth: int) -> Dictionary:
 			break
 	return {"from": best[0], "to": best[1], "promotion": best[2]}
 
+# --- Analyse: mehrere beste Züge mit Bewertung und Hauptvariante ---
+
+## Analysiert die Stellung wie eine Engine im Analysemodus: iterative Vertiefung
+## mit der Meister-Suche, wobei die besten [param multipv] Züge genau bewertet
+## werden. Nach jeder vollständig gerechneten Tiefe wird [param progress] mit
+## einem Ergebnis aufgerufen (aus dem Such-Thread, falls die Analyse in einem
+## Thread läuft). Bricht nach [param time_ms] ms, bei [member cancelled] oder
+## bei Tiefe [param max_depth] ab und liefert das letzte Ergebnis.
+##
+## Ergebnis: {"depth": int, "nodes": int, "lines": Array}. Jede Linie ist
+## {"action": Dictionary wie bei choose_action, "name": String,
+## "score": int (Hundertstel Spearman aus Sicht von Gelb), "pv": Array[String]}.
+## Die Linien sind nach Stärke für die Seite am Zug sortiert.
+func analyze(rules: KaissaRules, multipv: int = 3, time_ms: int = 60000,
+		progress: Callable = Callable(), max_depth: int = 30) -> Dictionary:
+	_load(rules.clone())
+	nodes = 0
+	reached_depth = 0
+	_aborted = false
+	used_book = false
+	_killers.clear()
+	for i in MAX_PLY:
+		_killers.append([[], []])
+	_tt.clear()
+	_history.clear()
+	for side in 2:
+		var table := PackedInt32Array()
+		table.resize(10000)
+		_history.append(table)
+	_deadline = Time.get_ticks_msec() + time_ms
+	var result := {"depth": 0, "nodes": 0, "lines": []}
+	if _r.is_over():
+		return result
+	var actions := _actions(_r.turn, false)
+	if actions.is_empty():
+		return result
+	_order(actions)
+	var count := mini(maxi(multipv, 1), actions.size())
+	for depth in range(1, max_depth + 1):
+		var scored := _analysis_root(actions, depth, count)
+		if _aborted or cancelled:
+			break
+		reached_depth = depth
+		actions.clear()
+		for entry in scored:
+			actions.append(entry[1])
+		var lines: Array = []
+		for i in count:
+			var action: Array = scored[i][1]
+			var score: int = scored[i][0]
+			var pv: Array[String] = [action_name(action)]
+			var undo := _do(action)
+			if not undo.captured_homestone:
+				pv.append_array(_pv_from_tt(depth + 2))
+			_undo(undo)
+			lines.append({
+				"action": {"from": action[0], "to": action[1], "promotion": action[2]},
+				"name": pv[0],
+				"score": score if _r.turn == PieceTypes.Side.YELLOW else -score,
+				"pv": pv,
+			})
+		chosen_score = scored[0][0]
+		result = {"depth": depth, "nodes": nodes, "lines": lines}
+		if progress.is_valid():
+			progress.call(result.duplicate(true))
+		# Erzwungener Sieg oder Verlust für alle angezeigten Züge: tiefer rechnen ändert nichts.
+		if absi(scored[count - 1][0]) >= WIN - 1000:
+			break
+	return result
+
+## Rechnet alle Züge der Wurzel; die besten [param count] bekommen einen genauen
+## Wert, die übrigen nur eine Obergrenze knapp unter dem schwächsten davon.
+## Liefert [Wert, Zug] absteigend sortiert.
+func _analysis_root(actions: Array, depth: int, count: int) -> Array:
+	var scored: Array = []
+	## Genaue Werte der bisher besten Züge, absteigend.
+	var top: Array[int] = []
+	for action: Array in actions:
+		var undo := _do(action)
+		var score: int
+		if undo.captured_homestone:
+			score = WIN
+		elif top.size() < count:
+			score = -_pvs(depth - 1, -WIN * 2, WIN * 2, 1, true)
+		else:
+			var alpha: int = top[count - 1]
+			score = -_pvs(depth - 1, -alpha - 1, -alpha, 1, true)
+			if score > alpha and not _aborted:
+				score = -_pvs(depth - 1, -WIN * 2, -alpha, 1, true)
+			else:
+				# Nur eine Obergrenze: Dieser Zug bleibt hinter den angezeigten.
+				score = mini(score, alpha) - 1
+		_undo(undo)
+		if _aborted:
+			break
+		scored.append([score, action])
+		if top.size() < count or score > top[count - 1]:
+			top.append(score)
+			top.sort()
+			top.reverse()
+			if top.size() > count:
+				top.resize(count)
+	scored.sort_custom(func(a, b): return a[0] > b[0])
+	return scored
+
+## Folgt den besten Zügen aus der Transpositionstabelle (Hauptvariante).
+func _pv_from_tt(max_length: int) -> Array[String]:
+	var names: Array[String] = []
+	var undos: Array = []
+	for i in max_length:
+		var entry: Array = _tt.get(_position_key(), [])
+		if entry.is_empty() or entry[3] == null:
+			break
+		var action: Array = entry[3]
+		if not _actions(_r.turn, false).has(action):
+			break
+		names.append(action_name(action))
+		var undo := _do(action)
+		undos.append(undo)
+		if undo.captured_homestone:
+			break
+	for i in range(undos.size() - 1, -1, -1):
+		_undo(undos[i])
+	return names
+
+## Text für eine Bewertung aus Sicht von Gelb: "+0.35" (Spearmen) oder "#3",
+## wenn ein Homestone in so vielen eigenen Zügen fällt ("#-3": Rot gewinnt).
+static func score_text(score: int) -> String:
+	if absi(score) >= WIN - 1000:
+		var moves := (WIN - absi(score)) / 2 + 1
+		return "#%d" % moves if score > 0 else "#-%d" % moves
+	return "%+.2f" % (score / 100.0)
+
+## Ob eine Bewertung einen erzwungenen Gewinn (Homestone fällt) bedeutet.
+static func is_win_score(score: int) -> bool:
+	return absi(score) >= WIN - 1000
+
 ## Liefert [Wert, bester Zug, ob der beste Zug den ersten übertroffen hat].
 func _master_root(actions: Array, depth: int, alpha: int, beta: int) -> Array:
 	var best_score := -WIN * 2

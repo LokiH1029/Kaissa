@@ -55,6 +55,19 @@ func clone() -> KaissaRules:
 	copy.history = history.duplicate()
 	return copy
 
+## Übernimmt den Spielstand von [param source] (z.B. beim Springen in der
+## Zugliste des Analysemodus) und meldet die Änderung.
+func copy_from(source: KaissaRules) -> void:
+	pieces = source.pieces.duplicate(true)
+	turn = source.turn
+	winner = source.winner
+	result_text = source.result_text
+	captured = source.captured.duplicate(true)
+	moves_made = source.moves_made.duplicate()
+	homestone_placed = source.homestone_placed.duplicate()
+	history = source.history.duplicate()
+	changed.emit()
+
 func _place(cell: Vector2i, type: PieceTypes.Type, side: PieceTypes.Side) -> void:
 	pieces[cell] = {"type": type, "side": side, "moved": false}
 
