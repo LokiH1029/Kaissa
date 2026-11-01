@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3 uid="uid://c7k4i5s5a0man"]
+[gd_scene load_steps=4 format=3 uid="uid://c7k4i5s5a0man"]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="PackedScene" uid="uid://b3k4i5s5a0brd" path="res://scenes/board.tscn" id="2_board"]
+[ext_resource type="Script" path="res://scripts/analysis_panel.gd" id="3_analysis"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_main")
@@ -55,6 +56,7 @@ theme_override_font_sizes/font_size = 40
 text = "Kaissa"
 
 [node name="PlayersGrid" type="GridContainer" parent="UI/Panel/Margin/VBox"]
+unique_name_in_owner = true
 layout_mode = 2
 columns = 2
 
@@ -123,12 +125,21 @@ unique_name_in_owner = true
 layout_mode = 2
 autowrap_mode = 3
 
+[node name="AnalysisPanel" type="VBoxContainer" parent="UI/Panel/Margin/VBox"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+script = ExtResource("3_analysis")
+
 [node name="Spacer" type="Control" parent="UI/Panel/Margin/VBox"]
+unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 mouse_filter = 2
 
 [node name="Legend" type="Label" parent="UI/Panel/Margin/VBox"]
+unique_name_in_owner = true
 layout_mode = 2
 autowrap_mode = 3
 text = "UB Ubar · UA Ubara · TN Tarnsman · SC Scribe
@@ -137,6 +148,7 @@ HT Rider of the High Tharlarion · PH Physician
 HS Homestone (Raute)"
 
 [node name="GameButtons" type="HBoxContainer" parent="UI/Panel/Margin/VBox"]
+unique_name_in_owner = true
 layout_mode = 2
 
 [node name="ResignButton" type="Button" parent="UI/Panel/Margin/VBox/GameButtons"]
@@ -155,3 +167,9 @@ text = "Remis vereinbaren"
 unique_name_in_owner = true
 layout_mode = 2
 text = "Neues Spiel"
+
+[node name="AnalysisButton" type="Button" parent="UI/Panel/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+toggle_mode = true
+text = "Analysemodus"

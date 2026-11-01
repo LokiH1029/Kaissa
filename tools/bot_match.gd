@@ -16,6 +16,8 @@ extends SceneTree
 ##   --out DATEI        Ausgabedatei (Standard: Konsole), wird ergänzt
 ##   --seed S
 ## Modus "rank" bewertet jeden erlaubten Zug nach --opening mit einer Suche von --time ms.
+## Modus "analyze" zeigt nach --opening die besten --lines Züge (Standard 3) wie im
+##   Analysemodus, je gerechneter Tiefe eine Zeile, bis --time ms vergangen sind.
 ## Modus "checkbook" prüft, ob alle Züge in OpeningBook erlaubt sind.
 
 const LEVELS := {"easy": KaissaAI.Level.EASY, "medium": KaissaAI.Level.MEDIUM,
@@ -50,6 +52,8 @@ func _initialize() -> void:
 		out_file.seek_end()
 	if opts.mode == "rank":
 		_rank()
+	elif opts.mode == "analyze":
+		_analyze()
 	elif opts.mode == "checkbook":
 		_check_book()
 	else:
@@ -166,6 +170,20 @@ func _rank() -> void:
 			depth = ai.reached_depth
 		_emit({"opening": opts.opening, "move": entry[0], "score": score, "depth": depth,
 			"level": opts.yellow, "time_ms": int(opts.time)})
+
+func _analyze() -> void:
+	var rules := KaissaRules.new()
+	rules.reset()
+	if not _apply_opening(rules, KaissaAI.new(KaissaAI.Level.HARD)):
+		return
+	var ai := KaissaAI.new(KaissaAI.Level.MASTER)
+	var start := Time.get_ticks_msec()
+	ai.analyze(rules, int(opts.get("lines", "3")), int(opts.time), func(info: Dictionary) -> void:
+		var parts: Array[String] = []
+		for line: Dictionary in info.lines:
+			parts.append("%s %s" % [KaissaAI.score_text(line.score), " ".join(line.pv)])
+		print("Tiefe %d, %d Stellungen, %d ms: %s" % [info.depth, info.nodes,
+			Time.get_ticks_msec() - start, " | ".join(parts)]))
 
 func _check_book() -> void:
 	var helper := KaissaAI.new(KaissaAI.Level.HARD)

@@ -18,6 +18,7 @@ Zwei Parteien, **Rot** und **Gelb**, treten auf einem Brett mit 10 × 10 Feldern
 - Homestone setzen (spätestens im zehnten Zug), Sieg durch Schlagen des gegnerischen Homestone
 - Spearmen werden auf der gegnerischen ersten Reihe gegen Rider oder Tarnsman eingelöst
 - Aufgeben und Remis
+- Analysemodus wie bei Lichess: die Engine zeigt laufend die drei besten Züge mit Bewertung
 - Die Figuren werden derzeit per Code gezeichnet (Kreise mit Kürzel, Homestone als Raute)
 
 ## Starten
@@ -50,6 +51,28 @@ Ab Stufe mittel spielen die Bots die ersten Züge aus einem Eröffnungsbuch
 nicht im Buch, rechnen sie wie gewohnt. Die Auswertung steht in
 [docs/eroeffnungen.md](docs/eroeffnungen.md).
 
+### Analysemodus
+
+Der Knopf **„Analysemodus“** unten in der Seitenleiste schaltet in die Analyse, ähnlich wie bei
+Lichess. Die Bots pausieren, man zieht für beide Seiten selbst, und die Engine (Suche der Stufe
+Meister) rechnet die Stellung auf dem Brett laufend durch:
+
+- **Bewertung** aus Sicht von Gelb in Spearmen: `+1.20` heißt, Gelb steht etwa einen Spearman
+  besser, `-0.50` ist gut für Rot. `#3` bedeutet, dass Gelb den Homestone in drei eigenen Zügen
+  erzwingt, `#-3` dasselbe für Rot. Der Balken zeigt das Verhältnis (gelb links, rot rechts).
+- **Die drei besten Züge** mit ihrer Hauptvariante; ein Klick spielt den Zug. Auf dem Brett zeigt
+  ein grüner Pfeil den besten Zug, blaue Pfeile die beiden nächsten. Darüber stehen Rechentiefe
+  und Anzahl der Stellungen; die Engine rechnet mit jeder Tiefe weiter, höchstens eine Minute je
+  Stellung. Mit dem Schalter „Engine“ lässt sie sich abschalten.
+- **Zugliste** mit allen Zügen der Partie. Ein Klick auf einen Zug oder die Knöpfe |◀ ◀ ▶ ▶|
+  (auch Pfeiltasten, Pos1 und Ende) springen zu dieser Stellung. Zieht man dort anders, beginnt
+  eine neue Variante.
+
+Die laufende Partie wird beim Einschalten übernommen. „Analyse beenden“ setzt die Partie von der
+gerade angezeigten Stellung aus fort, mit den eingestellten Spielern.
+
+![Analysemodus](docs/analysemodus.png)
+
 ### Eröffnungen mit Bot-Partien testen
 
 `tools/bot_match.gd` lässt Bots ohne Fenster gegeneinander spielen, `tools/analyze_openings.py`
@@ -60,6 +83,8 @@ wertet die Partien aus und erzeugt Bericht und Eröffnungsbuch:
 godot --headless --path . -s tools/bot_match.gd -- --games 50 --time 200 --random-plies 1 --out runs/partien.jsonl
 # Partien ab einer festen Eröffnung, die ersten 10 Halbzüge mit etwas Zufall
 godot --headless --path . -s tools/bot_match.gd -- --games 20 --opening "g10-i7 f2-f3" --random-plies 0 --noise-plies 10 --out runs/partien.jsonl
+# Analyse wie im Analysemodus: die drei besten Züge nach einer Zugfolge, 10 s lang
+godot --headless --path . -s tools/bot_match.gd -- --mode analyze --time 10000 --opening "g10-i7"
 # Engine (Meister, 3 s) bewertet jeden möglichen Zug nach einer Zugfolge
 godot --headless --path . -s tools/bot_match.gd -- --mode rank --yellow master --time 3000 --opening "g10-i7" --out runs/bewertung.jsonl
 # Baum automatisch ausbauen: jede über Buchzüge erreichte Stellung bewerten, bis 5 Halbzüge tief
@@ -87,6 +112,7 @@ scripts/
   kaissa_ai.gd         Computergegner (Alpha-Beta- und Engine-Suche, Stellungsbewertung, Stufen)
   opening_book.gd      Eröffnungsbuch der Bots (erzeugt aus Bot-Partien)
   board_view.gd        Zeichnet Brett und Figuren, verarbeitet Mausklicks
+  analysis_panel.gd    Analysemodus: Engine im Hintergrund, beste Züge, Zugliste
   main.gd              Verbindet Regeln, Brett und Oberfläche
 assets/                Platz für Grafiken, Schriften und Klänge
 docs/regeln.md         Die Spielregeln dieses Projekts
@@ -97,5 +123,5 @@ tools/                 Bot-Turniere ohne Fenster und ihre Auswertung
 ## Ideen für die nächsten Schritte
 
 - Eigene Grafiken für die Figuren
-- Spielstand speichern und Zugliste in der Seitenleiste anzeigen
+- Spielstand speichern
 - Netzwerkspiel

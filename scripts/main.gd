@@ -25,6 +25,10 @@ const BOT_DRAW_MARGIN := 50
 @onready var restart_button: Button = %RestartButton
 @onready var yellow_player: OptionButton = %YellowPlayer
 @onready var red_player: OptionButton = %RedPlayer
+@onready var analysis_button: Button = %AnalysisButton
+@onready var analysis_panel: AnalysisPanel = %AnalysisPanel
+## Im Analysemodus ausgeblendet, damit die Analyse Platz hat.
+@onready var game_only_nodes: Array[Control] = [%PlayersGrid, %CapturedLabel, %Spacer, %Legend, %GameButtons]
 
 var rules := KaissaRules.new()
 var _pending_promotion: Array[Vector2i] = []
@@ -48,6 +52,9 @@ func _ready() -> void:
 	_setup_player_select(yellow_player, PieceTypes.Side.YELLOW)
 	_setup_player_select(red_player, PieceTypes.Side.RED)
 	restart_button.pressed.connect(_restart)
+	analysis_panel.setup(rules, board)
+	analysis_panel.position_jumped.connect(_hide_promotion)
+	analysis_button.toggled.connect(_set_analysis)
 	get_viewport().size_changed.connect(_layout)
 	_layout()
 	_restart()
@@ -114,7 +121,20 @@ func _update_ui() -> void:
 	_maybe_start_bot()
 
 func is_bot(side: PieceTypes.Side) -> bool:
-	return players[side] != HUMAN
+	# Im Analysemodus zieht man beide Seiten selbst, die Bots pausieren.
+	return players[side] != HUMAN and not analysis_panel.active
+
+## Analysemodus ein- oder ausschalten. Beim Ausschalten geht die Partie von der
+## gerade angezeigten Stellung aus weiter.
+func _set_analysis(on: bool) -> void:
+	_cancel_bot()
+	_hide_promotion()
+	board.clear_selection()
+	analysis_panel.set_active(on)
+	for node in game_only_nodes:
+		node.visible = not on
+	analysis_button.text = "Analyse beenden" if on else "Analysemodus"
+	_update_ui()
 
 func _player_name(side: PieceTypes.Side) -> String:
 	if not is_bot(side):

@@ -31,6 +31,10 @@ var last_move: Array[Vector2i] = []
 var placing_homestone := false
 ## false, solange der Bot am Zug ist: Klicks werden dann ignoriert.
 var accepts_moves := true
+## Pfeile, z.B. für die besten Züge im Analysemodus:
+## {"from": Vector2i, "to": Vector2i, "color": Color, "width": float}.
+## "from" = (-1, -1) markiert das Setzen des Homestone auf "to" mit einem Ring.
+var arrows: Array[Dictionary] = []
 var _font: Font
 
 func _ready() -> void:
@@ -127,6 +131,8 @@ func _draw() -> void:
 		return
 	for cell: Vector2i in rules.pieces:
 		_draw_piece(cell, rules.pieces[cell])
+	for arrow in arrows:
+		_draw_arrow(arrow)
 	for cell in targets:
 		var center := _center(cell)
 		if rules.piece_at(cell).is_empty():
@@ -169,6 +175,26 @@ func _draw_piece(cell: Vector2i, piece: Dictionary) -> void:
 	var text_size := _font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
 	var pos := center + Vector2(-text_size.x * 0.5, font_size * 0.35)
 	draw_string(_font, pos, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, ink)
+
+func set_arrows(new_arrows: Array[Dictionary]) -> void:
+	arrows = new_arrows
+	queue_redraw()
+
+func _draw_arrow(arrow: Dictionary) -> void:
+	var color: Color = arrow.color
+	var width: float = arrow.get("width", 10.0)
+	var to := _center(arrow.to)
+	if arrow.from.x < 0:
+		draw_arc(to, cell_size * 0.4, 0, TAU, 40, color, width * 0.7)
+		return
+	var from := _center(arrow.from)
+	var dir := (to - from).normalized()
+	var head := minf(width * 2.6, from.distance_to(to) * 0.6)
+	var tip := to - dir * cell_size * 0.12
+	var base := tip - dir * head
+	draw_line(from + dir * cell_size * 0.15, base, color, width)
+	var side := Vector2(-dir.y, dir.x) * head * 0.6
+	draw_colored_polygon(PackedVector2Array([tip, base + side, base - side]), color)
 
 func _rect(cell: Vector2i) -> Rect2:
 	return Rect2(Vector2(cell) * cell_size, Vector2(cell_size, cell_size))
