@@ -210,6 +210,37 @@ func place_homestone(cell: Vector2i) -> bool:
 	_end_turn()
 	return true
 
+## Sucht die erlaubte Aktion der Seite am Zug mit der Kurzschreibweise [param name]
+## (siehe [method action_name]). Ergebnis {"from", "to", "promotion"} oder {}, wenn es
+## sie nicht gibt. Beim Homestone ist "from" (-1, -1).
+func find_action(name: String) -> Dictionary:
+	if is_over():
+		return {}
+	for cell in homestone_placements(turn):
+		if action_name(Vector2i(-1, -1), cell) == name:
+			return {"from": Vector2i(-1, -1), "to": cell, "promotion": -1}
+	for from: Vector2i in pieces.keys():
+		if not can_select(from):
+			continue
+		for to in legal_moves(from):
+			var capture := not piece_at(to).is_empty()
+			if needs_promotion(from, to):
+				for promotion: int in PieceTypes.PROMOTIONS:
+					if action_name(from, to, capture, promotion) == name:
+						return {"from": from, "to": to, "promotion": promotion}
+			elif action_name(from, to, capture) == name:
+				return {"from": from, "to": to, "promotion": -1}
+	return {}
+
+## Führt die Aktion mit der Kurzschreibweise [param name] aus; false, wenn sie nicht erlaubt ist.
+func apply_name(name: String) -> bool:
+	var action := find_action(name)
+	if action.is_empty():
+		return false
+	if action.from.x < 0:
+		return place_homestone(action.to)
+	return move(action.from, action.to, action.promotion)
+
 ## Die Seite [param side] gibt auf; ohne Angabe die Seite am Zug.
 func resign(side: int = -1) -> void:
 	if is_over():

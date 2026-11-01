@@ -155,3 +155,8 @@ text = "Remis vereinbaren"
 unique_name_in_owner = true
 layout_mode = 2
 text = "Neues Spiel"
+
+[node name="TrainingButton" type="Button" parent="UI/Panel/Margin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Eröffnungen üben"

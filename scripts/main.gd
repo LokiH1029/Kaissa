@@ -25,6 +25,8 @@ const BOT_DRAW_MARGIN := 50
 @onready var restart_button: Button = %RestartButton
 @onready var yellow_player: OptionButton = %YellowPlayer
 @onready var red_player: OptionButton = %RedPlayer
+@onready var training_button: Button = %TrainingButton
+@onready var side_panel: PanelContainer = $UI/Panel
 
 var rules := KaissaRules.new()
 var _pending_promotion: Array[Vector2i] = []
@@ -34,6 +36,9 @@ var _bot_thread: Thread
 var _bot_ai: KaissaAI
 ## Wird bei Neustart oder Spielerwechsel erhöht; ältere Bot-Ergebnisse verfallen dann.
 var _bot_request := 0
+## Seitenleiste des Eröffnungstrainings; solange sie offen ist, ruht der Bot.
+var training_panel: TrainingPanel
+var _training := false
 
 func _ready() -> void:
 	board.setup(rules)
@@ -48,6 +53,7 @@ func _ready() -> void:
 	_setup_player_select(yellow_player, PieceTypes.Side.YELLOW)
 	_setup_player_select(red_player, PieceTypes.Side.RED)
 	restart_button.pressed.connect(_restart)
+	_setup_training()
 	get_viewport().size_changed.connect(_layout)
 	_layout()
 	_restart()
@@ -71,6 +77,8 @@ func _layout() -> void:
 	board.position = Vector2(maxf(margin, 24.0), maxf(margin, 24.0))
 
 func _update_ui() -> void:
+	if _training:
+		return
 	var side := rules.turn
 	var bot_turn := is_bot(side) and not rules.is_over()
 	board.accepts_moves = not bot_turn
@@ -161,7 +169,7 @@ func _offer_draw() -> void:
 
 ## Startet den Bot in einem eigenen Thread, wenn er am Zug ist.
 func _maybe_start_bot() -> void:
-	if rules.is_over() or not is_bot(rules.turn) or _bot_thread != null:
+	if _training or rules.is_over() or not is_bot(rules.turn) or _bot_thread != null:
 		return
 	_bot_request += 1
 	_bot_ai = KaissaAI.new(players[rules.turn])
@@ -190,6 +198,48 @@ func _cancel_bot() -> void:
 	_bot_request += 1
 	if _bot_ai != null:
 		_bot_ai.cancelled = true
+
+func _setup_training() -> void:
+	training_panel = TrainingPanel.new()
+	training_panel.visible = false
+	$UI.add_child(training_panel)
+	for property in ["anchor_left", "anchor_top", "anchor_right", "anchor_bottom",
+			"offset_left", "offset_top", "offset_right", "offset_bottom", "grow_horizontal", "grow_vertical"]:
+		training_panel.set(property, side_panel.get(property))
+	training_panel.setup(rules, board)
+	training_panel.closed.connect(_close_training)
+	training_panel.continue_against_bot.connect(_continue_after_training)
+	training_button.pressed.connect(_open_training)
+
+func _open_training() -> void:
+	_cancel_bot()
+	_hide_promotion()
+	_training = true
+	board.accepts_moves = false
+	board.clear_selection()
+	side_panel.visible = false
+	training_panel.visible = true
+
+func _leave_training() -> void:
+	_training = false
+	training_panel.visible = false
+	side_panel.visible = true
+
+func _close_training() -> void:
+	_leave_training()
+	_restart()
+
+## Nach einer Übung spielt der Bot die Gegenseite in derselben Stellung weiter.
+func _continue_after_training(side: PieceTypes.Side) -> void:
+	_leave_training()
+	var opponent := KaissaRules.other(side)
+	players[side] = HUMAN
+	if not is_bot(opponent):
+		players[opponent] = KaissaAI.Level.MEDIUM
+	yellow_player.select(players[PieceTypes.Side.YELLOW] + 1)
+	red_player.select(players[PieceTypes.Side.RED] + 1)
+	board.clear_selection()
+	_update_ui()
 
 func _on_promotion_requested(from: Vector2i, to: Vector2i) -> void:
 	_pending_promotion = [from, to]
