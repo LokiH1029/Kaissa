@@ -14,7 +14,7 @@ Zwei Parteien, **Rot** und **Gelb**, treten auf einem Brett mit 10 × 10 Feldern
 - Je Seite 22 Figuren: Ubar, Ubara, Tarnsmen, Scribes, Builders, Initiates, Spearmen,
   Riders of the High Tharlarion und Physicians, dazu der Homestone
 - Zwei Spieler an einem Rechner (Hot-Seat): Figur anklicken, erlaubte Zielfelder werden markiert
-- Computergegner in drei Stufen (leicht, mittel, schwer), für jede Seite getrennt wählbar
+- Computergegner in vier Stufen (leicht, mittel, schwer, Meister), für jede Seite getrennt wählbar
 - Homestone setzen (spätestens im zehnten Zug), Sieg durch Schlagen des gegnerischen Homestone
 - Spearmen werden auf der gegnerischen ersten Reihe gegen Rider oder Tarnsman eingelöst
 - Aufgeben und Remis
@@ -40,6 +40,7 @@ auch mitten im Spiel. Stehen beide Seiten auf Bot, spielt der Computer gegen sic
 | leicht | schaut nur einen Zug weit und entscheidet mit viel Zufall, übersieht also oft Drohungen |
 | mittel | rechnet die Antwort des Gegners mit ein |
 | schwer | rechnet bis zu vier Halbzüge voraus und Schlagabfolgen zu Ende, denkt bis zu vier Sekunden |
+| Meister | Engine nach dem Vorbild von Schach-Engines wie Stockfish: Transpositionstabelle, Principal Variation Search, Null-Zug-Suche, Late Move Reductions und History-Heuristik. Rechnet in acht Sekunden meist fünf bis sechs Halbzüge tief |
 
 Ein Remisangebot nimmt der Bot nur an, wenn er nicht klar vorn liegt. „Aufgeben“ gibt immer
 für den menschlichen Spieler auf.
@@ -54,7 +55,7 @@ scenes/
 scripts/
   piece_types.gd       Figurentypen, Zugmuster und Grundaufstellung (hier Regeln anpassen)
   kaissa_rules.gd      Spielzustand und Zuglogik, unabhängig von der Darstellung
-  kaissa_ai.gd         Computergegner (Alpha-Beta-Suche, Stellungsbewertung, Stufen)
+  kaissa_ai.gd         Computergegner (Alpha-Beta- und Engine-Suche, Stellungsbewertung, Stufen)
   board_view.gd        Zeichnet Brett und Figuren, verarbeitet Mausklicks
   main.gd              Verbindet Regeln, Brett und Oberfläche
 assets/                Platz für Grafiken, Schriften und Klänge

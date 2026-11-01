@@ -3,7 +3,7 @@ extends Node2D
 
 const HINT := "Figur anklicken, um ihre Züge zu sehen.\nRechtsklick hebt die Auswahl auf."
 ## Auswahl je Seite. Index 0 = Mensch, Index n = Bot mit KaissaAI.Level n - 1.
-const PLAYER_OPTIONS: Array[String] = ["Mensch", "Bot (leicht)", "Bot (mittel)", "Bot (schwer)"]
+const PLAYER_OPTIONS: Array[String] = ["Mensch", "Bot (leicht)", "Bot (mittel)", "Bot (schwer)", "Bot (Meister)"]
 const HUMAN := -1
 ## So lange zeigt der Bot mindestens "denkt nach", damit seine Züge sichtbar bleiben.
 const BOT_MIN_DELAY_MS := 500
