@@ -63,6 +63,7 @@ ihre Varianten (die Antworten von Rot), ganz oben „Alle Eröffnungen gemischt�
 2. Eröffnung oder Variante anklicken und **„Üben starten“** (oder doppelklicken).
 3. Auf der eigenen Seite einen Buchzug spielen. Ein Zug, der nicht im Buch steht, wird
    zurückgenommen. **„Tipp“** markiert die richtige Figur, **„Lösung zeigen“** auch das Zielfeld.
+   Den Homestone setzt man wie im Spiel über den Knopf „Homestone setzen“.
    Der Trainer antwortet für die Gegenseite mit Buchzügen, nach Gewicht zufällig gewählt.
 4. Am Ende des Buchs gibt es eine Auswertung. **„Nochmal“** startet dieselbe Eröffnung mit einer
    anderen Variante, **„Gegen Bot weiterspielen“** spielt die Stellung gegen den Computer weiter.

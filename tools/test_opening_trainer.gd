@@ -79,8 +79,29 @@ func _check_scene() -> void:
 				_fail("Übung %s für %s endet nicht" % [opening.moves, KaissaRules.side_name(side)])
 			elif side == PieceTypes.Side.YELLOW:
 				print("  %s: %s" % [opening.name, " ".join(rules.history)])
+	await _check_homestone(main, panel, rules)
 	panel.stop()
 	print("Übungen in der Szene durchgespielt.")
+
+## Der Homestone lässt sich im Training über den eigenen Knopf und einen Klick setzen.
+func _check_homestone(main: Node, panel: TrainingPanel, rules: KaissaRules) -> void:
+	var line: Array[String] = ["g10-i7", "f2-f3"]
+	panel.start(line, PieceTypes.Side.YELLOW)
+	main.board.apply_action(rules.find_action("g10-i7"))
+	await create_timer(TrainingPanel.OPPONENT_DELAY + 0.3).timeout
+	if not panel._homestone_button.visible or panel._homestone_button.disabled:
+		_fail("Knopf „Homestone setzen“ fehlt im Training")
+		return
+	panel._homestone_button.pressed.emit()
+	main.board._on_click(Vector2i(6, 9))
+	await process_frame
+	await process_frame
+	if rules.history.back() != "HS@g10":
+		_fail("Homestone im Training nicht gesetzt: %s" % " ".join(rules.history))
+	elif panel._homestone_button.visible:
+		_fail("Knopf „Homestone setzen“ nach dem Setzen noch sichtbar")
+	else:
+		print("Homestone im Training gesetzt.")
 
 ## Ein erlaubter Zug, der nicht im Buch steht.
 func _some_wrong_move(rules: KaissaRules, expected: Array[String]) -> String:

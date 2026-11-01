@@ -31,6 +31,7 @@ var _status: Label
 var _feedback: Label
 var _line_label: Label
 var _hint_button: Button
+var _homestone_button: Button
 var _solution_button: Button
 var _again_button: Button
 var _bot_button: Button
@@ -101,6 +102,11 @@ func _build_ui() -> void:
 	_status.add_theme_font_size_override("font_size", 20)
 	_feedback = _label(box)
 	_line_label = _label(box)
+
+	_homestone_button = Button.new()
+	_homestone_button.text = "Homestone setzen"
+	_homestone_button.pressed.connect(board.start_homestone_placement)
+	box.add_child(_homestone_button)
 
 	var row := HBoxContainer.new()
 	_hint_button = _button(row, "Tipp", _show_hint)
@@ -217,6 +223,7 @@ func _advance() -> void:
 	if rules.turn != trainer.player_side:
 		board.accepts_moves = false
 		_status.text = "Der Gegner antwortet …"
+		_update_buttons()
 		var token := _token
 		await get_tree().create_timer(OPPONENT_DELAY).timeout
 		if token == _token and active:
@@ -363,6 +370,9 @@ func _update_buttons() -> void:
 	var waiting := active and not rules.is_over() and rules.turn == trainer.player_side \
 		and not trainer.is_finished(rules.history)
 	_hint_button.disabled = not waiting
+	# Die normale Seitenleiste ist im Training ausgeblendet, daher ein eigener Knopf.
+	_homestone_button.visible = waiting and not rules.homestone_placed[trainer.player_side]
+	_homestone_button.disabled = rules.homestone_placements(trainer.player_side).is_empty()
 	_solution_button.disabled = not waiting
 	var finished := active and trainer.is_finished(rules.history)
 	_again_button.disabled = not active
