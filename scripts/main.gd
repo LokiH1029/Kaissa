@@ -2,6 +2,14 @@ extends Node2D
 ## Hauptszene: verbindet Spielregeln, Brett und Seitenleiste.
 
 const HINT := "Figur anklicken, um ihre Züge zu sehen.\nRechtsklick hebt die Auswahl auf."
+## Auswahl je Seite. Index 0 = Mensch, Index n = Bot mit KaissaAI.Level n - 1.
+const PLAYER_OPTIONS: Array[String] = ["Mensch", "Bot (leicht)", "Bot (mittel)", "Bot (schwer)", "Bot (Meister)"]
+const HUMAN := -1
+## So lange zeigt der Bot mindestens "denkt nach", damit seine Züge sichtbar bleiben.
+const BOT_MIN_DELAY_MS := 500
+## Der Bot nimmt ein Remis an, solange er nicht mehr als so viel vorn liegt
+## (Hundertstel Spearman).
+const BOT_DRAW_MARGIN := 50
 
 @onready var board: BoardView = $Board
 @onready var status_label: Label = %StatusLabel
@@ -15,9 +23,17 @@ const HINT := "Figur anklicken, um ihre Züge zu sehen.\nRechtsklick hebt die Au
 @onready var resign_button: Button = %ResignButton
 @onready var draw_button: Button = %DrawButton
 @onready var restart_button: Button = %RestartButton
+@onready var yellow_player: OptionButton = %YellowPlayer
+@onready var red_player: OptionButton = %RedPlayer
 
 var rules := KaissaRules.new()
 var _pending_promotion: Array[Vector2i] = []
+## Je Seite HUMAN oder ein KaissaAI.Level. Standard: Mensch (Gelb) gegen Bot (Rot).
+var players: Array[int] = [HUMAN, KaissaAI.Level.MEDIUM]
+var _bot_thread: Thread
+var _bot_ai: KaissaAI
+## Wird bei Neustart oder Spielerwechsel erhöht; ältere Bot-Ergebnisse verfallen dann.
+var _bot_request := 0
 
 func _ready() -> void:
 	board.setup(rules)
@@ -27,14 +43,23 @@ func _ready() -> void:
 	homestone_button.pressed.connect(board.start_homestone_placement)
 	promote_rider_button.pressed.connect(_promote.bind(PieceTypes.Type.RIDER))
 	promote_tarnsman_button.pressed.connect(_promote.bind(PieceTypes.Type.TARNSMAN))
-	resign_button.pressed.connect(rules.resign)
-	draw_button.pressed.connect(rules.agree_draw)
+	resign_button.pressed.connect(_resign)
+	draw_button.pressed.connect(_offer_draw)
+	_setup_player_select(yellow_player, PieceTypes.Side.YELLOW)
+	_setup_player_select(red_player, PieceTypes.Side.RED)
 	restart_button.pressed.connect(_restart)
 	get_viewport().size_changed.connect(_layout)
 	_layout()
 	_restart()
 
+func _exit_tree() -> void:
+	_cancel_bot()
+	if _bot_thread != null:
+		_bot_thread.wait_to_finish()
+		_bot_thread = null
+
 func _restart() -> void:
+	_cancel_bot()
 	_hide_promotion()
 	board.last_move.clear()
 	board.clear_selection()
@@ -47,9 +72,13 @@ func _layout() -> void:
 
 func _update_ui() -> void:
 	var side := rules.turn
+	var bot_turn := is_bot(side) and not rules.is_over()
+	board.accepts_moves = not bot_turn
 	if rules.is_over():
 		status_label.text = rules.result_text
 		board.clear_selection()
+	elif bot_turn:
+		status_label.text = "%s denkt nach …" % _player_name(side)
 	elif rules.must_place_homestone(side):
 		status_label.text = "%s muss jetzt den Homestone setzen" % KaissaRules.side_name(side)
 		board.start_homestone_placement()
@@ -66,12 +95,13 @@ func _update_ui() -> void:
 	homestone_label.text = "\n".join(stone_lines)
 
 	var running := not rules.is_over()
-	homestone_button.visible = running and not rules.homestone_placed[side]
+	homestone_button.visible = running and not bot_turn and not rules.homestone_placed[side]
 	homestone_button.disabled = rules.homestone_placements(side).is_empty()
 	homestone_button.text = "Homestone setzen" if not homestone_button.disabled \
 		else "Homestone setzen (erste Reihe ist voll)"
-	resign_button.disabled = not running
-	draw_button.disabled = not running
+	var any_human := not is_bot(PieceTypes.Side.YELLOW) or not is_bot(PieceTypes.Side.RED)
+	resign_button.disabled = not running or not any_human
+	draw_button.disabled = not running or not any_human
 
 	var lines: Array[String] = []
 	for s in [PieceTypes.Side.YELLOW, PieceTypes.Side.RED]:
@@ -81,6 +111,85 @@ func _update_ui() -> void:
 				names.append(PieceTypes.DEFINITIONS[piece.type].name)
 		lines.append("%s verloren: %s" % [KaissaRules.side_name(s), ", ".join(names) if names else "–"])
 	captured_label.text = "\n".join(lines)
+	_maybe_start_bot()
+
+func is_bot(side: PieceTypes.Side) -> bool:
+	return players[side] != HUMAN
+
+func _player_name(side: PieceTypes.Side) -> String:
+	if not is_bot(side):
+		return KaissaRules.side_name(side)
+	return "%s (Bot, %s)" % [KaissaRules.side_name(side), KaissaAI.LEVEL_NAMES[players[side]]]
+
+func _setup_player_select(button: OptionButton, side: PieceTypes.Side) -> void:
+	button.clear()
+	for i in PLAYER_OPTIONS.size():
+		button.add_item(PLAYER_OPTIONS[i], i)
+	button.select(players[side] + 1)
+	button.item_selected.connect(_on_player_selected.bind(side))
+
+func _on_player_selected(index: int, side: PieceTypes.Side) -> void:
+	players[side] = index - 1
+	_cancel_bot()
+	if is_bot(side) and rules.turn == side:
+		_hide_promotion()
+		board.clear_selection()
+	_update_ui()
+
+## Die Seite des einzigen menschlichen Spielers, sonst die Seite am Zug.
+func _human_side() -> PieceTypes.Side:
+	if is_bot(PieceTypes.Side.RED) and not is_bot(PieceTypes.Side.YELLOW):
+		return PieceTypes.Side.YELLOW
+	if is_bot(PieceTypes.Side.YELLOW) and not is_bot(PieceTypes.Side.RED):
+		return PieceTypes.Side.RED
+	return rules.turn
+
+func _resign() -> void:
+	_cancel_bot()
+	rules.resign(_human_side())
+
+func _offer_draw() -> void:
+	var human := _human_side()
+	var opponent := KaissaRules.other(human)
+	if is_bot(opponent):
+		var score := KaissaAI.new(players[opponent]).evaluate_for(rules, opponent)
+		if score > BOT_DRAW_MARGIN:
+			info_label.text = "%s lehnt das Remis ab." % _player_name(opponent)
+			return
+	_cancel_bot()
+	rules.agree_draw()
+
+## Startet den Bot in einem eigenen Thread, wenn er am Zug ist.
+func _maybe_start_bot() -> void:
+	if rules.is_over() or not is_bot(rules.turn) or _bot_thread != null:
+		return
+	_bot_request += 1
+	_bot_ai = KaissaAI.new(players[rules.turn])
+	_bot_thread = Thread.new()
+	_bot_thread.start(_bot_think.bind(_bot_ai, rules.clone(), _bot_request))
+
+func _bot_think(ai: KaissaAI, snapshot: KaissaRules, request: int) -> void:
+	var start := Time.get_ticks_msec()
+	var action := ai.choose_action(snapshot)
+	var wait := BOT_MIN_DELAY_MS - (Time.get_ticks_msec() - start)
+	if wait > 0 and not ai.cancelled:
+		OS.delay_msec(wait)
+	_on_bot_done.call_deferred(request, action)
+
+func _on_bot_done(request: int, action: Dictionary) -> void:
+	_bot_thread.wait_to_finish()
+	_bot_thread = null
+	_bot_ai = null
+	if request == _bot_request and not rules.is_over() and is_bot(rules.turn) and not action.is_empty():
+		board.apply_action(action)
+	else:
+		# Veraltetes Ergebnis (Neustart oder Spielerwechsel): neu entscheiden.
+		_update_ui()
+
+func _cancel_bot() -> void:
+	_bot_request += 1
+	if _bot_ai != null:
+		_bot_ai.cancelled = true
 
 func _on_promotion_requested(from: Vector2i, to: Vector2i) -> void:
 	_pending_promotion = [from, to]

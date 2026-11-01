@@ -38,6 +38,18 @@ func reset() -> void:
 			_place(Vector2i(x, back + 2 * dy), PieceTypes.Type.SPEARMAN, side)
 	changed.emit()
 
+## Unabhängige Kopie des Spielstands (ohne Signalverbindungen), z.B. für den Bot.
+func clone() -> KaissaRules:
+	var copy := KaissaRules.new()
+	copy.pieces = pieces.duplicate(true)
+	copy.turn = turn
+	copy.winner = winner
+	copy.result_text = result_text
+	copy.captured = captured.duplicate(true)
+	copy.moves_made = moves_made.duplicate()
+	copy.homestone_placed = homestone_placed.duplicate()
+	return copy
+
 func _place(cell: Vector2i, type: PieceTypes.Type, side: PieceTypes.Side) -> void:
 	pieces[cell] = {"type": type, "side": side, "moved": false}
 
@@ -177,10 +189,12 @@ func place_homestone(cell: Vector2i) -> bool:
 	_end_turn()
 	return true
 
-func resign() -> void:
+## Die Seite [param side] gibt auf; ohne Angabe die Seite am Zug.
+func resign(side: int = -1) -> void:
 	if is_over():
 		return
-	_finish(other(turn), "%s gibt auf. %s gewinnt!" % [side_name(turn), side_name(other(turn))])
+	var loser: PieceTypes.Side = turn if side < 0 else side
+	_finish(other(loser), "%s gibt auf. %s gewinnt!" % [side_name(loser), side_name(other(loser))])
 	changed.emit()
 
 func agree_draw() -> void:
