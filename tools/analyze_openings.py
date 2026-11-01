@@ -9,6 +9,7 @@ Aufruf:
 --rank   JSON-Zeilen aus dem Modus "rank" (Engine-Bewertung je Zug)
 --report schreibt einen Bericht in Markdown
 --book   ersetzt den Buchteil von scripts/opening_book.gd
+--notes  Markdown-Zusammenfassung für den Anfang des Berichts (z.B. docs/eroeffnungen_notizen.md)
 """
 import argparse
 import json
@@ -70,15 +71,18 @@ def build_book(ranks, stats, margin, max_moves, min_games, min_score):
         for name, m in sorted(moves.items(), key=lambda kv: -kv[1]["score"]):
             if m["score"] < best - margin:
                 break
+            weight = 10 - (best - m["score"]) * 9 // max(margin, 1)
             s = stats.get(prefix, {}).get(name)
-            if s and s[0] >= min_games and s[1] / s[0] < min_score:
-                continue
-            chosen.append((name, m["score"]))
+            if s and s[0] >= min_games:
+                # Ergebnis der Bot-Partien: schlechte Züge raus, gute häufiger.
+                if s[1] / s[0] < min_score:
+                    continue
+                weight = weight * 2 * s[1] / s[0]
+            chosen.append((name, max(1, round(weight))))
             if len(chosen) >= max_moves:
                 break
         if chosen:
-            # Bester Zug am häufigsten, schwächere seltener.
-            book[prefix] = {name: max(1, 10 - (best - score) * 9 // max(margin, 1)) for name, score in chosen}
+            book[prefix] = dict(chosen)
     return book
 
 
@@ -101,7 +105,7 @@ def pct(x):
     return "%d %%" % round(100 * x)
 
 
-def write_report(path, games, stats, ranks, book):
+def write_report(path, games, stats, ranks, book, notes=None):
     out = []
     n = len(games)
     yellow = sum(SCORE[g["result"]] for g in games)
@@ -109,6 +113,9 @@ def write_report(path, games, stats, ranks, book):
     adjudicated = sum(1 for g in games if g["reason"] == "Wertung nach Material")
     out.append("# Eröffnungen aus Bot-gegen-Bot-Partien\n")
     out.append("Erzeugt mit `tools/bot_match.gd` und `tools/analyze_openings.py`.\n")
+    if notes:
+        with open(notes, encoding="utf-8") as f:
+            out.append(f.read().strip() + "\n")
     out.append("## Überblick\n")
     out.append("- Partien: %d (davon %d entschieden, %d nach Materialvorsprung gewertet)" % (n, decided, adjudicated))
     if n:
@@ -177,11 +184,12 @@ def main():
     ap.add_argument("--rank", nargs="*", default=[])
     ap.add_argument("--report")
     ap.add_argument("--book")
+    ap.add_argument("--notes", help="Markdown-Datei mit Zusammenfassung, kommt an den Anfang des Berichts")
     ap.add_argument("--depth", type=int, default=8, help="Halbzüge, die für die Statistik zählen")
     ap.add_argument("--margin", type=int, default=40, help="Abstand zum Bestwert für Buchzüge")
     ap.add_argument("--max-moves", type=int, default=3)
     ap.add_argument("--min-games", type=int, default=6)
-    ap.add_argument("--min-score", type=float, default=0.4)
+    ap.add_argument("--min-score", type=float, default=0.45)
     a = ap.parse_args()
     games = [g for g in load(a.games) if g.get("moves")]
     stats = game_stats(games, a.depth)
@@ -190,7 +198,7 @@ def main():
     if a.book:
         write_book(a.book, book)
     if a.report:
-        write_report(a.report, games, stats, ranks, book)
+        write_report(a.report, games, stats, ranks, book, a.notes)
     print("Partien: %d, bewertete Stellungen: %d, Buchstellungen: %d" % (len(games), len(ranks), len(book)))
 
 
