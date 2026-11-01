@@ -45,6 +45,35 @@ auch mitten im Spiel. Stehen beide Seiten auf Bot, spielt der Computer gegen sic
 Ein Remisangebot nimmt der Bot nur an, wenn er nicht klar vorn liegt. „Aufgeben“ gibt immer
 für den menschlichen Spieler auf.
 
+Ab Stufe mittel spielen die Bots die ersten Züge aus einem Eröffnungsbuch
+(`scripts/opening_book.gd`), das aus Bot-gegen-Bot-Partien gewonnen wurde. Steht eine Stellung
+nicht im Buch, rechnen sie wie gewohnt. Die Auswertung steht in
+[docs/eroeffnungen.md](docs/eroeffnungen.md).
+
+### Eröffnungen mit Bot-Partien testen
+
+`tools/bot_match.gd` lässt Bots ohne Fenster gegeneinander spielen, `tools/analyze_openings.py`
+wertet die Partien aus und erzeugt Bericht und Eröffnungsbuch:
+
+```sh
+# 50 Partien schwer gegen schwer, 200 ms je Zug, erster Zug von Gelb zufällig
+godot --headless --path . -s tools/bot_match.gd -- --games 50 --time 200 --random-plies 1 --out runs/partien.jsonl
+# Partien ab einer festen Eröffnung, die ersten 10 Halbzüge mit etwas Zufall
+godot --headless --path . -s tools/bot_match.gd -- --games 20 --opening "g10-i7 f2-f3" --random-plies 0 --noise-plies 10 --out runs/partien.jsonl
+# Engine (Meister, 3 s) bewertet jeden möglichen Zug nach einer Zugfolge
+godot --headless --path . -s tools/bot_match.gd -- --mode rank --yellow master --time 3000 --opening "g10-i7" --out runs/bewertung.jsonl
+# Baum automatisch ausbauen: jede über Buchzüge erreichte Stellung bewerten, bis 5 Halbzüge tief
+python3 tools/expand_book.py --godot godot --rank runs/bewertung.jsonl --games runs/partien.jsonl --depth 5 --jobs 4
+# Auswerten, Bericht und Buch neu schreiben, Buch prüfen
+python3 tools/analyze_openings.py --games runs/partien.jsonl --rank runs/bewertung.jsonl --report docs/eroeffnungen.md --book scripts/opening_book.gd
+godot --headless --path . -s tools/bot_match.gd -- --mode checkbook
+```
+
+Züge werden als `e9-e7` (ziehen), `d10xg7` (schlagen), `c2-c1=TN` (einlösen) und `HS@c10`
+(Homestone setzen) geschrieben. Jede Partie läuft in einem eigenen Prozess; mehrere Prozesse
+parallel nutzen mehrere Prozessorkerne. Hat eine Seite über zehn Halbzüge mehr als 15 Spearmen
+Vorsprung, wird die Partie für sie gewertet; nach 200 Halbzügen endet sie remis.
+
 ## Aufbau
 
 ```
@@ -56,14 +85,17 @@ scripts/
   piece_types.gd       Figurentypen, Zugmuster und Grundaufstellung (hier Regeln anpassen)
   kaissa_rules.gd      Spielzustand und Zuglogik, unabhängig von der Darstellung
   kaissa_ai.gd         Computergegner (Alpha-Beta- und Engine-Suche, Stellungsbewertung, Stufen)
+  opening_book.gd      Eröffnungsbuch der Bots (erzeugt aus Bot-Partien)
   board_view.gd        Zeichnet Brett und Figuren, verarbeitet Mausklicks
   main.gd              Verbindet Regeln, Brett und Oberfläche
 assets/                Platz für Grafiken, Schriften und Klänge
 docs/regeln.md         Die Spielregeln dieses Projekts
+docs/eroeffnungen.md   Auswertung der Bot-gegen-Bot-Partien
+tools/                 Bot-Turniere ohne Fenster und ihre Auswertung
 ```
 
 ## Ideen für die nächsten Schritte
 
 - Eigene Grafiken für die Figuren
-- Spielstand speichern und Zugliste in Notation
+- Spielstand speichern und Zugliste in der Seitenleiste anzeigen
 - Netzwerkspiel
