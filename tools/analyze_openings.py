@@ -62,7 +62,7 @@ def rank_table(ranks):
     return table
 
 
-def build_book(ranks, stats, margin, max_moves, min_games, min_score):
+def build_book(ranks, stats, margin, max_moves, min_games, min_score, root_moves=None):
     """Buchzüge je Stellung: Züge nahe am Engine-Bestwert, die in Partien nicht schlecht abschneiden."""
     book = {}
     for prefix, moves in ranks.items():
@@ -79,7 +79,7 @@ def build_book(ranks, stats, margin, max_moves, min_games, min_score):
                     continue
                 weight = weight * 2 * s[1] / s[0]
             chosen.append((name, max(1, round(weight))))
-            if len(chosen) >= max_moves:
+            if len(chosen) >= (root_moves or max_moves if prefix == "" else max_moves):
                 break
         if chosen:
             book[prefix] = dict(chosen)
@@ -188,13 +188,14 @@ def main():
     ap.add_argument("--depth", type=int, default=8, help="Halbzüge, die für die Statistik zählen")
     ap.add_argument("--margin", type=int, default=40, help="Abstand zum Bestwert für Buchzüge")
     ap.add_argument("--max-moves", type=int, default=3)
+    ap.add_argument("--root-moves", type=int, default=5, help="Buchzüge in der Startstellung")
     ap.add_argument("--min-games", type=int, default=6)
     ap.add_argument("--min-score", type=float, default=0.45)
     a = ap.parse_args()
     games = [g for g in load(a.games) if g.get("moves")]
     stats = game_stats(games, a.depth)
     ranks = rank_table(load(a.rank))
-    book = build_book(ranks, stats, a.margin, a.max_moves, a.min_games, a.min_score)
+    book = build_book(ranks, stats, a.margin, a.max_moves, a.min_games, a.min_score, a.root_moves)
     if a.book:
         write_book(a.book, book)
     if a.report:

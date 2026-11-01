@@ -62,6 +62,8 @@ godot --headless --path . -s tools/bot_match.gd -- --games 50 --time 200 --rando
 godot --headless --path . -s tools/bot_match.gd -- --games 20 --opening "g10-i7 f2-f3" --random-plies 0 --noise-plies 10 --out runs/partien.jsonl
 # Engine (Meister, 3 s) bewertet jeden möglichen Zug nach einer Zugfolge
 godot --headless --path . -s tools/bot_match.gd -- --mode rank --yellow master --time 3000 --opening "g10-i7" --out runs/bewertung.jsonl
+# Baum automatisch ausbauen: jede über Buchzüge erreichte Stellung bewerten, bis 5 Halbzüge tief
+python3 tools/expand_book.py --godot godot --rank runs/bewertung.jsonl --games runs/partien.jsonl --depth 5 --jobs 4
 # Auswerten, Bericht und Buch neu schreiben, Buch prüfen
 python3 tools/analyze_openings.py --games runs/partien.jsonl --rank runs/bewertung.jsonl --report docs/eroeffnungen.md --book scripts/opening_book.gd
 godot --headless --path . -s tools/bot_match.gd -- --mode checkbook
