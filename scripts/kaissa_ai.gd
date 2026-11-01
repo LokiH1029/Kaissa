@@ -64,6 +64,16 @@ static var _pst: PackedInt32Array
 ## Wird von außen gesetzt, um eine laufende Suche abzubrechen.
 var cancelled := false
 var level: Level = Level.MEDIUM
+## Denkzeit je Zug in ms; -1 = Vorgabe der Stufe (für Bot-Turniere).
+var time_limit_ms := -1
+## Zufallsrauschen auf die Zugbewertung; -1 = Vorgabe der Stufe.
+var noise_override := -1
+## Ab Stufe mittel Züge aus dem Eröffnungsbuch (OpeningBook) spielen.
+var use_book := true
+## Ob der letzte Zug aus dem Eröffnungsbuch kam.
+var used_book := false
+## Bewertung des gewählten Zugs aus Sicht der Seite am Zug (letzte volle Tiefe).
+var chosen_score := 0
 ## Anzahl der untersuchten Stellungen der letzten Suche (für Tests).
 var nodes := 0
 ## Erreichte Suchtiefe der letzten Suche.
@@ -168,8 +178,15 @@ func choose_action(rules: KaissaRules) -> Dictionary:
 	_killers.clear()
 	for i in MAX_PLY:
 		_killers.append([[], []])
+	used_book = false
+	if use_book and level != Level.EASY:
+		var booked := _book_action()
+		if not booked.is_empty():
+			used_book = true
+			return booked
 	var settings: Dictionary = SETTINGS[level]
-	_deadline = Time.get_ticks_msec() + settings.time_ms
+	_deadline = Time.get_ticks_msec() + (time_limit_ms if time_limit_ms > 0 else settings.time_ms)
+	var noise: int = noise_override if noise_override >= 0 else settings.noise
 	if level == Level.MASTER:
 		return _master_search(settings.depth)
 
@@ -182,7 +199,7 @@ func choose_action(rules: KaissaRules) -> Dictionary:
 	# Iterative Vertiefung: Wird die Zeit knapp, gilt das Ergebnis der letzten
 	# vollständig gerechneten Tiefe.
 	for depth in range(1, settings.depth + 1):
-		var scored := _search_root(actions, depth, settings.noise, settings.quiescence)
+		var scored := _search_root(actions, depth, noise, settings.quiescence)
 		if _aborted or cancelled:
 			break
 		reached_depth = depth
@@ -191,9 +208,32 @@ func choose_action(rules: KaissaRules) -> Dictionary:
 		for entry in scored:
 			actions.append(entry[1])
 		best = actions[0]
+		chosen_score = scored[0][0]
 		if scored[0][0] >= WIN - 1000:
 			break
 	return {"from": best[0], "to": best[1], "promotion": best[2]}
+
+## Sucht einen Buchzug für die bisherige Zugfolge und macht daraus eine Aktion.
+func _book_action() -> Dictionary:
+	var name := OpeningBook.pick(_r.history, _rng)
+	if name.is_empty():
+		return {}
+	for action: Array in _actions(_r.turn, false):
+		if action_name(action) == name:
+			return {"from": action[0], "to": action[1], "promotion": action[2]}
+	return {}
+
+## Kurzschreibweise einer Aktion im aktuellen Suchstand (siehe KaissaRules.action_name).
+func action_name(action: Array) -> String:
+	return KaissaRules.action_name(action[0], action[1], _r.pieces.has(action[1]), action[2])
+
+## Alle Aktionen der Seite am Zug mit Kurzschreibweise, als [Name, Aktion als Dictionary].
+func named_actions(rules: KaissaRules) -> Array:
+	_load(rules)
+	var result: Array = []
+	for action: Array in _actions(_r.turn, false):
+		result.append([action_name(action), {"from": action[0], "to": action[1], "promotion": action[2]}])
+	return result
 
 ## Bewertet die Stellung aus Sicht von [param side] (positiv = gut für [param side]).
 func evaluate_for(rules: KaissaRules, side: PieceTypes.Side) -> int:
@@ -348,6 +388,7 @@ func _master_search(max_depth: int) -> Dictionary:
 			break
 		reached_depth = depth
 		last_score = result[0]
+		chosen_score = last_score
 		best = result[1]
 		actions.erase(best)
 		actions.push_front(best)

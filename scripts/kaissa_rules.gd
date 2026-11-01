@@ -18,6 +18,9 @@ var captured: Array[Dictionary] = []
 ## Anzahl der bereits ausgeführten Züge je Seite (Index = PieceTypes.Side).
 var moves_made: Array[int] = [0, 0]
 var homestone_placed: Array[bool] = [false, false]
+## Bisher gespielte Züge in Kurzschreibweise (siehe [method action_name]),
+## z.B. für das Eröffnungsbuch der Bots.
+var history: Array[String] = []
 
 func reset() -> void:
 	pieces.clear()
@@ -27,6 +30,7 @@ func reset() -> void:
 	turn = PieceTypes.Side.YELLOW
 	moves_made = [0, 0]
 	homestone_placed = [false, false]
+	history.clear()
 	# Gelb unten, Rot oben; Ubar steht Ubar gegenüber.
 	for side in [PieceTypes.Side.YELLOW, PieceTypes.Side.RED]:
 		var back := home_row(side)
@@ -48,6 +52,7 @@ func clone() -> KaissaRules:
 	copy.captured = captured.duplicate(true)
 	copy.moves_made = moves_made.duplicate()
 	copy.homestone_placed = homestone_placed.duplicate()
+	copy.history = history.duplicate()
 	return copy
 
 func _place(cell: Vector2i, type: PieceTypes.Type, side: PieceTypes.Side) -> void:
@@ -69,6 +74,20 @@ static func home_row(side: PieceTypes.Side) -> int:
 ## Richtung "nach vorn" in Bildschirmkoordinaten.
 static func forward(side: PieceTypes.Side) -> int:
 	return -1 if side == PieceTypes.Side.YELLOW else 1
+
+## Feldname wie am Brett, z.B. "e9" (Linie a–j, Reihe 1 oben bis 10 unten).
+static func cell_name(cell: Vector2i) -> String:
+	return "%s%d" % [char(97 + cell.x), cell.y + 1]
+
+## Kurzschreibweise eines Zugs: "e9-e7", Schlagen "d10xg7", Einlösen "c2-c1=TN",
+## Homestone setzen "HS@c10". [param from] = (-1, -1) steht für das Setzen.
+static func action_name(from: Vector2i, to: Vector2i, capture: bool = false, promotion: int = -1) -> String:
+	if from.x < 0:
+		return "HS@" + cell_name(to)
+	var text := cell_name(from) + ("x" if capture else "-") + cell_name(to)
+	if promotion >= 0:
+		text += "=" + PieceTypes.DEFINITIONS[promotion].short
+	return text
 
 func piece_at(cell: Vector2i) -> Dictionary:
 	return pieces.get(cell, {})
@@ -169,6 +188,7 @@ func move(from: Vector2i, to: Vector2i, promotion: int = -1) -> bool:
 	var promote := needs_promotion(from, to)
 	var piece: Dictionary = pieces[from]
 	var target := piece_at(to)
+	history.append(action_name(from, to, not target.is_empty(), promotion if promote else -1))
 	if not target.is_empty():
 		captured.append(target)
 	pieces.erase(from)
@@ -185,6 +205,7 @@ func place_homestone(cell: Vector2i) -> bool:
 	if not homestone_placements(turn).has(cell):
 		return false
 	_place(cell, PieceTypes.Type.HOMESTONE, turn)
+	history.append(action_name(Vector2i(-1, -1), cell))
 	homestone_placed[turn] = true
 	_end_turn()
 	return true
